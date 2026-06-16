@@ -81,14 +81,28 @@ export default function Home() {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fafafa' }}>
+    <div style={{
+      minHeight: '100vh',
+      padding: '18px 12px',
+      backgroundColor: '#f7f8f3',
+      backgroundImage: `
+        radial-gradient(circle at 14% 0%, rgba(127, 119, 221, 0.14), transparent 30%),
+        radial-gradient(circle at 88% 12%, rgba(29, 158, 117, 0.12), transparent 28%),
+        linear-gradient(rgba(60, 52, 137, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(60, 52, 137, 0.035) 1px, transparent 1px)
+      `,
+      backgroundSize: 'auto, auto, 28px 28px, 28px 28px',
+    }}>
       <div style={{
         maxWidth: 1400,
         margin: '0 auto',
         background: '#fff',
-        minHeight: '100vh',
+        minHeight: 'calc(100vh - 36px)',
         borderLeft: '0.5px solid var(--border)',
         borderRight: '0.5px solid var(--border)',
+        borderTop: '0.5px solid var(--border)',
+        borderBottom: '0.5px solid var(--border)',
+        boxShadow: '0 18px 60px rgba(28, 32, 46, 0.08)',
       }}>
         <Topbar runDate={runDate} onChatToggle={() => setChatOpen(o => !o)} chatOpen={chatOpen} />
         <Toolbar mode={mode} setMode={setMode} filters={filters} setFilters={setFilters} />
@@ -112,6 +126,14 @@ export default function Home() {
             </div>
           )}
         </div>
+        <footer style={{
+          padding: '14px 28px',
+          borderTop: '0.5px solid var(--border)',
+          color: 'var(--muted)',
+          fontSize: 12,
+        }}>
+          Premia · Options screening dashboard · Data for research only
+        </footer>
       </div>
     </div>
   )

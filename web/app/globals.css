@@ -27,6 +27,35 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.premia-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 28px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.premia-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+  .premia-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .premia-topbar-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }

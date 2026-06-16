@@ -49,6 +49,7 @@ TICKERS: list[str] = [
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
+# Edit check: Codex can update this ingestion script.
 DTE_MIN: int = 14
 DTE_MAX: int = 21
 MAX_SPREAD_WIDTH: float = 3.0

@@ -14,18 +14,17 @@ export default function Topbar({ runDate, chatOpen, onChatToggle }: Props) {
     : '—'
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '18px 28px',
-      borderBottom: '0.5px solid var(--border)',
-    }}>
-      <div style={{ fontSize: 16, fontWeight: 500, letterSpacing: '-0.3px' }}>
-        pre<span style={{ color: 'var(--purple)' }}>m</span>ia
+    <div className="premia-topbar">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <div style={{ fontSize: 16, fontWeight: 500 }}>
+          pre<span style={{ color: 'var(--purple)' }}>m</span>ia
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+          Finds high-probability put spreads and cash-secured puts
+        </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="premia-topbar-actions">
         <span style={{ fontSize: 12, color: 'var(--muted)' }}>
           Last run: {formatted}
         </span>
