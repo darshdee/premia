@@ -1,5 +1,5 @@
 """
-premia/pipeline/ingest.py
+>>> premia/pipeline/ingest.py
 
 Bull put spread screener — ingestion layer.
 
@@ -51,7 +51,7 @@ TICKERS: list[str] = [
 # ---------------------------------------------------------------------------
 DTE_MIN: int = 14
 DTE_MAX: int = 21
-MAX_SPREAD_WIDTH: float = 5.0
+MAX_SPREAD_WIDTH: float = 3.0
 RISK_FREE_RATE: float = 0.05
 MAX_RETRIES: int = 5
 BASE_WAIT: float = 1.25

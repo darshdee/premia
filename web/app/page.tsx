@@ -9,8 +9,6 @@ import SpreadsTable from '@/components/SpreadsTable'
 import CspTable from '@/components/CspTable'
 import ChatPanel from '@/components/ChatPanel'
 
-const MAX_BUDGET = 25000
-
 export default function Home() {
   const [mode, setMode] = useState<'spreads' | 'csp'>('spreads')
   const [spreads, setSpreads] = useState<Spread[]>([])
@@ -19,8 +17,8 @@ export default function Home() {
   const [runDate, setRunDate] = useState<string>('')
   const [chatOpen, setChatOpen] = useState(false)
   const [filters, setFilters] = useState<Filters>({
-    budget: MAX_BUDGET,
-    maxRisk: 15,
+    budget: 100,
+    maxRisk: 5,
     minProb: 60,
   })
 
@@ -54,11 +52,7 @@ export default function Home() {
 
     const { data: spreadsData, error: spreadsError } = await supabase
       .from('spreads')
-      .select(`
-        *,
-        sell_put:sell_put_id(*),
-        buy_put:buy_put_id(*)
-      `)
+      .select(`*, sell_put:sell_put_id(*), buy_put:buy_put_id(*)`)
       .in('sell_put_id', putIds)
       .order('risk_multiple', { ascending: true })
 
@@ -113,11 +107,7 @@ export default function Home() {
           </div>
 
           {chatOpen && (
-            <div style={{
-              width: 340,
-              borderLeft: '0.5px solid var(--border)',
-              flexShrink: 0,
-            }}>
+            <div style={{ width: 340, borderLeft: '0.5px solid var(--border)', flexShrink: 0 }}>
               <ChatPanel />
             </div>
           )}

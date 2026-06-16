@@ -9,6 +9,7 @@ Two-step upsert:
 """
 
 import logging
+import math
 import os
 
 import pandas as pd
@@ -23,9 +24,8 @@ PUTS_TABLE    = "puts"
 SPREADS_TABLE = "spreads"
 BATCH_SIZE    = 200
 
-# columns that must be integers in Postgres
-PUTS_INT_COLS    = ["dte", "volume", "open_interest"]
-SPREADS_INT_COLS: list[str] = []
+PUTS_INT_COLS: list[str] = ["dte", "volume", "open_interest"]
+SPREAD_REQUIRED_NUMERIC = ["width", "credit", "max_profit", "max_loss", "risk_multiple"]
 
 
 def _get_client() -> Client:
@@ -38,28 +38,38 @@ def _get_client() -> Client:
     return create_client(url, key)
 
 
+def _is_bad(v) -> bool:
+    """True if value is NaN, inf, or pandas NA."""
+    if v is None:
+        return True
+    if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+        return True
+    try:
+        return bool(pd.isna(v))
+    except (TypeError, ValueError):
+        return False
+
+
+def _safe(v):
+    """Return None for any non-JSON-safe value, otherwise return as-is."""
+    return None if _is_bad(v) else v
+
+
+def _sanitize_records(records: list[dict]) -> list[dict]:
+    return [{k: _safe(v) for k, v in row.items()} for row in records]
+
+
 def _clean(df: pd.DataFrame, int_cols: list[str]) -> pd.DataFrame:
-    """
-    - Replace inf/-inf and NaN with None (JSON-safe nulls)
-    - Cast integer columns to pandas Int64 (nullable int) so they
-      serialise as 14 not 14.0, even when NaNs are present
-    """
     df = df.copy()
     df = df.replace([float("inf"), float("-inf")], None)
     for col in int_cols:
         if col in df.columns:
-            df[col] = pd.array(df[col], dtype="Int64")  # nullable integer
+            df[col] = pd.array(df[col], dtype="Int64")
     df = df.where(pd.notna(df), other=None)
     return df
 
 
 def upsert_puts(puts_df: pd.DataFrame) -> dict[tuple, int]:
-    """
-    Upsert raw put rows into `puts` table.
-
-    Returns a dict mapping (ticker, run_date, expiration, strike) -> put.id
-    so the spread builder can resolve foreign keys.
-    """
     if puts_df.empty:
         log.warning("upsert_puts called with empty DataFrame.")
         return {}
@@ -74,7 +84,7 @@ def upsert_puts(puts_df: pd.DataFrame) -> dict[tuple, int]:
         df[col] = df[col].astype(str)
     df = _clean(df, PUTS_INT_COLS)
 
-    records = df.to_dict(orient="records")
+    records = _sanitize_records(df.to_dict(orient="records"))
     client = _get_client()
 
     all_rows = []
@@ -88,7 +98,6 @@ def upsert_puts(puts_df: pd.DataFrame) -> dict[tuple, int]:
         all_rows.extend(response.data)
         log.info("puts: upserted batch %d–%d.", i + 1, i + len(batch))
 
-    # build lookup map: (ticker, run_date, expiration, strike) -> id
     id_map: dict[tuple, int] = {
         (row["ticker"], row["run_date"], row["expiration"], float(row["strike"])): row["id"]
         for row in all_rows
@@ -99,12 +108,6 @@ def upsert_puts(puts_df: pd.DataFrame) -> dict[tuple, int]:
 
 
 def upsert_spreads(spreads_df: pd.DataFrame, id_map: dict[tuple, int]) -> int:
-    """
-    Upsert spread rows into `spreads` table.
-
-    Resolves sell_put_id and buy_put_id from id_map before inserting.
-    Skips any spread where either leg id cannot be resolved.
-    """
     if spreads_df.empty:
         log.warning("upsert_spreads called with empty DataFrame.")
         return 0
@@ -123,6 +126,13 @@ def upsert_spreads(spreads_df: pd.DataFrame, id_map: dict[tuple, int]) -> int:
     skipped = 0
 
     for _, row in df.iterrows():
+        # skip rows with bad numeric fields
+        if any(_is_bad(row.get(col)) for col in SPREAD_REQUIRED_NUMERIC):
+            log.warning("Skipping spread %s %s %s/%s — bad numeric value.",
+                        row["ticker"], row["expiration"], row["sell_strike"], row["buy_strike"])
+            skipped += 1
+            continue
+
         sell_key = (row["ticker"], row["run_date"], row["expiration"], float(row["sell_strike"]))
         buy_key  = (row["ticker"], row["run_date"], row["expiration"], float(row["buy_strike"]))
 
@@ -150,6 +160,7 @@ def upsert_spreads(spreads_df: pd.DataFrame, id_map: dict[tuple, int]) -> int:
         log.warning("No spread records to upsert after id resolution.")
         return 0
 
+    records = _sanitize_records(records)
     client = _get_client()
     total = 0
 

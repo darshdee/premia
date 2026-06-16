@@ -9,20 +9,16 @@ type Props = {
   setFilters: (f: Filters) => void
 }
 
-const MIN_BUDGET = 100
-const MAX_BUDGET = 25000
+const BUDGET_OPTIONS = [100, 200, 300, 500, 1000, 10000]
 
-function formatBudget(val: number) {
-  if (val >= MAX_BUDGET) return 'Any'
+const divider = <div style={{ width: '0.5px', height: 20, background: 'var(--border)' }} />
+
+function fmt(val: number) {
   if (val >= 1000) return `$${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k`
   return `$${val}`
 }
 
-const divider = <div style={{ width: '0.5px', height: 20, background: 'var(--border)' }} />
-
 export default function Toolbar({ mode, setMode, filters, setFilters }: Props) {
-  const budgetDisplay = formatBudget(filters.budget)
-
   return (
     <div style={{
       display: 'flex',
@@ -63,30 +59,28 @@ export default function Toolbar({ mode, setMode, filters, setFilters }: Props) {
       {divider}
 
       <label style={{ fontSize: 12, color: 'var(--muted)' }}>Max budget</label>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input
-          type="range"
-          min={MIN_BUDGET}
-          max={MAX_BUDGET}
-          step={100}
-          value={filters.budget}
-          onChange={e => setFilters({ ...filters, budget: Number(e.target.value) })}
-          style={{ width: 120, accentColor: 'var(--purple)' }}
-        />
-        <span style={{
+      <select
+        value={filters.budget}
+        onChange={e => setFilters({ ...filters, budget: Number(e.target.value) })}
+        style={{
           fontSize: 13,
-          fontWeight: 500,
-          color: filters.budget >= MAX_BUDGET ? 'var(--muted)' : 'var(--foreground)',
-          minWidth: 40,
-        }}>
-          {budgetDisplay}
-        </span>
-      </div>
+          padding: '5px 10px',
+          border: '0.5px solid var(--border)',
+          borderRadius: 8,
+          background: '#fff',
+          color: 'var(--foreground)',
+          cursor: 'pointer',
+        }}
+      >
+        {BUDGET_OPTIONS.map(v => (
+          <option key={v} value={v}>{fmt(v)}</option>
+        ))}
+      </select>
 
       {mode === 'spreads' && (
         <>
           {divider}
-          <label style={{ fontSize: 12, color: 'var(--muted)' }}>Max risk ×</label>
+          <label style={{ fontSize: 12, color: 'var(--muted)' }}>Max loss:profit</label>
           <input
             type="number"
             value={filters.maxRisk}
